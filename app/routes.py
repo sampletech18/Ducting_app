@@ -1,41 +1,42 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+# app/routes.py
+
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from database import db
 from models import User, Vendor, VendorContact, Project, MeasurementSheet
 from datetime import datetime
 import math
 
-app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+main = Blueprint('main', __name__)
 
-@app.route('/')
+@main.route('/')
 def home():
-    return redirect(url_for('login'))
+    return redirect(url_for('main.login'))
 
-@app.route('/login', methods=['GET', 'POST'])
+@main.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         user = User.query.filter_by(username=request.form['username']).first()
         if user and user.password == request.form['password']:
             session['user'] = user.username
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('main.dashboard'))
         flash('Invalid Credentials')
     return render_template('login.html')
 
-@app.route('/register', methods=['GET', 'POST'])
+@main.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         new_user = User(username=request.form['username'], password=request.form['password'])
         db.session.add(new_user)
         db.session.commit()
         flash('User registered')
-        return redirect(url_for('login'))
+        return redirect(url_for('main.login'))
     return render_template('register.html')
 
-@app.route('/dashboard')
+@main.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html')
 
-@app.route('/vendors', methods=['GET', 'POST'])
+@main.route('/vendors', methods=['GET', 'POST'])
 def vendors():
     if request.method == 'POST':
         vendor = Vendor(
@@ -52,11 +53,11 @@ def vendors():
         db.session.add(vendor)
         db.session.commit()
         flash('Vendor added')
-        return redirect(url_for('vendors'))
+        return redirect(url_for('main.vendors'))
     vendors = Vendor.query.all()
     return render_template('vendor_registration.html', vendors=vendors)
 
-@app.route('/new_project', methods=['GET', 'POST'])
+@main.route('/new_project', methods=['GET', 'POST'])
 def new_project():
     vendors = Vendor.query.all()
     if request.method == 'POST':
@@ -79,15 +80,15 @@ def new_project():
         )
         db.session.add(project)
         db.session.commit()
-        return redirect(url_for('projects'))
+        return redirect(url_for('main.projects'))
     return render_template('new_project.html', vendors=vendors)
 
-@app.route('/projects')
+@main.route('/projects')
 def projects():
     projects = Project.query.all()
     return render_template('projects.html', projects=projects)
 
-@app.route('/measurement_sheet/<int:project_id>', methods=['GET', 'POST'])
+@main.route('/measurement_sheet/<int:project_id>', methods=['GET', 'POST'])
 def measurement_sheet(project_id):
     project = Project.query.get_or_404(project_id)
     if request.method == 'POST':
@@ -114,7 +115,7 @@ def measurement_sheet(project_id):
             quantity=quantity,
             factor=factor,
             area=w1 * h1 * quantity * factor / 1000000,
-            gauge='24g',  # You can apply logic later
+            gauge='24g',  # Update this logic later if needed
             bolts=bolts,
             gasket=gasket,
             cleat=cleat,
