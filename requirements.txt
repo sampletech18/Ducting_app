@@ -1,0 +1,9 @@
+Flask
+Flask-SQLAlchemy
+psycopg2-binary
+Flask-Migrate
+Flask-WTF
+WTForms
+python-dotenv
+openpyxl
+reportlab
