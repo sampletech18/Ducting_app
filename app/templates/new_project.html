@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>New Project</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      padding: 30px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .form-container {
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 25px;
+      max-width: 900px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input[type="text"], input[type="email"], input[type="file"], input[type="date"], select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .actions {
+      text-align: right;
+      margin-top: 20px;
+    }
+
+    .actions button {
+      padding: 10px 20px;
+      margin-left: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-save {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .btn-cancel {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 30px;
+      background: white;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #dee2e6;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f1f1f1;
+    }
+
+    .btn-action {
+      padding: 5px 10px;
+      margin: 0 3px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      color: white;
+    }
+
+    .btn-edit {
+      background-color: #28a745;
+    }
+
+    .btn-delete {
+      background-color: #dc3545;
+    }
+
+    .btn-measurement {
+      background-color: #17a2b8;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>New Project Entry</h2>
+
+  <div class="form-container">
+    <form method="POST" action="/save_project" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Enquiry ID</label>
+        <input type="text" name="enquiry_id" value="{{ enquiry_id }}" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>Project Name</label>
+        <input type="text" name="project_name" required>
+      </div>
+
+      <div class="form-group">
+        <label>Project Location</label>
+        <input type="text" name="project_location" required>
+      </div>
+
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" name="start_date" required>
+      </div>
+
+      <div class="form-group">
+        <label>End Date</label>
+        <input type="date" name="end_date">
+      </div>
+
+      <div class="form-group">
+        <label>Vendor</label>
+        <select id="vendor_select" name="vendor_id" onchange="fillVendorDetails()" required>
+          <option value="">-- Select Vendor --</option>
+          {% for vendor in vendors %}
+            <option value="{{ vendor.id }}" data-gst="{{ vendor.gst_number }}" data-address="{{ vendor.address }}">{{ vendor.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>GST</label>
+        <input type="text" id="gst_field" name="gst" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>Address</label>
+        <input type="text" id="address_field" name="address" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>Quotation</label>
+        <input type="text" name="quotation">
+      </div>
+
+      <div class="form-group">
+        <label>Project Incharge</label>
+        <input type="text" name="project_incharge">
+      </div>
+
+      <div class="form-group">
+        <label>Email ID</label>
+        <input type="email" name="email_id">
+      </div>
+
+      <div class="form-group">
+        <label>Contact Number</label>
+        <input type="text" name="contact_number">
+      </div>
+
+      <div class="form-group">
+        <label>Source Drawing Upload</label>
+        <input type="file" name="source_drawing">
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn-save">Save</button>
+        <button type="reset" class="btn-cancel">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Live Table Section -->
+  <div class="form-container">
+    <h3>Project Entries</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Enquiry ID</th>
+          <th>Project Name</th>
+          <th>Location</th>
+          <th>Vendor</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for project in projects %}
+        <tr>
+          <td>{{ project.enquiry_id }}</td>
+          <td>{{ project.project_name }}</td>
+          <td>{{ project.project_location }}</td>
+          <td>{{ project.vendor.name }}</td>
+          <td>
+            <button class="btn-action btn-edit" onclick="location.href='/edit_project/{{ project.id }}'">Edit</button>
+            <button class="btn-action btn-delete" onclick="if(confirm('Delete this project?')) location.href='/delete_project/{{ project.id }}'">Delete</button>
+            <button class="btn-action btn-measurement" onclick="location.href='/measurement_sheet/{{ project.id }}'">Add Measurement Sheet</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    function fillVendorDetails() {
+      const vendorSelect = document.getElementById('vendor_select');
+      const selected = vendorSelect.options[vendorSelect.selectedIndex];
+      document.getElementById('gst_field').value = selected.getAttribute('data-gst') || '';
+      document.getElementById('address_field').value = selected.getAttribute('data-address') || '';
+    }
+  </script>
+
+</body>
+</html>
