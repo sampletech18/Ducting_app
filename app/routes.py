@@ -1,7 +1,7 @@
 # app/routes.py
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from database import db
+from app.database import db
 from models import User, Vendor, VendorContact, Project, MeasurementSheet
 from datetime import datetime
 import math
