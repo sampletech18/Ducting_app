@@ -7,3 +7,4 @@ WTForms
 python-dotenv
 openpyxl
 reportlab
+gunicorn
