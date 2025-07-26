@@ -1,12 +1,15 @@
-# app/routes.py
-
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from werkzeug.utils import secure_filename
 from app.database import db
 from app.models import User, Vendor, VendorContact, Project, MeasurementSheet
-import math
 from datetime import datetime
+import os
+import math
 
 main = Blueprint('main', __name__)
+
+UPLOAD_FOLDER = 'static/uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @main.route('/')
 def home():
@@ -34,10 +37,15 @@ def register():
 
 @main.route('/dashboard')
 def dashboard():
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
     return render_template('dashboard.html')
 
 @main.route('/vendors', methods=['GET', 'POST'])
 def vendors():
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
+
     if request.method == 'POST':
         vendor = Vendor(
             name=request.form['name'],
@@ -54,15 +62,26 @@ def vendors():
         db.session.commit()
         flash('Vendor added')
         return redirect(url_for('main.vendors'))
+    
     vendors = Vendor.query.all()
     return render_template('vendor_registration.html', vendors=vendors)
 
 @main.route('/new_project', methods=['GET', 'POST'])
 def new_project():
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
+
     vendors = Vendor.query.all()
+
     if request.method == 'POST':
         last_id = Project.query.count() + 1
         enquiry_id = f"ve/TN/2526/e{last_id:03d}"
+
+        file = request.files.get('source_drawing')
+        filename = secure_filename(file.filename) if file else None
+        if filename:
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
+
         project = Project(
             enquiry_id=enquiry_id,
             name=request.form['name'],
@@ -76,31 +95,56 @@ def new_project():
             project_incharge=request.form['incharge'],
             email=request.form['email'],
             phone=request.form['phone'],
-            source_drawing=request.form.get('source_drawing')
+            source_drawing=filename
         )
         db.session.add(project)
         db.session.commit()
         return redirect(url_for('main.projects'))
+    
     return render_template('new_project.html', vendors=vendors)
 
 @main.route('/projects')
 def projects():
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
+
     projects = Project.query.all()
     return render_template('projects.html', projects=projects)
 
 @main.route('/measurement_sheet/<int:project_id>', methods=['GET', 'POST'])
 def measurement_sheet(project_id):
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
+
     project = Project.query.get_or_404(project_id)
+
     if request.method == 'POST':
         w1 = float(request.form['w1'])
         h1 = float(request.form['h1'])
+        w2 = float(request.form['w2'])
+        h2 = float(request.form['h2'])
+        length_or_radius = float(request.form['length_or_radius'])
         quantity = int(request.form['quantity'])
         factor = float(request.form['factor'])
 
+        # Area Calculation (placeholder - update based on duct type later)
+        area = (w1 * h1 * quantity * factor) / 1000000
+
+        # Material Calculation
         gasket = 2 * (w1 + h1) * quantity * factor
         cleat = 2 * (w1 + h1) * quantity * factor
         bolts = math.ceil((2 * (w1 + h1) / 150) * quantity * factor)
         corner = 4 * quantity
+
+        # Gauge Logic Placeholder
+        if w1 <= 751 and h1 <= 751:
+            gauge = '24g'
+        elif w1 <= 1201 and h1 <= 1201:
+            gauge = '22g'
+        elif w1 <= 1800 and h1 <= 1800:
+            gauge = '20g'
+        else:
+            gauge = '18g'
 
         sheet = MeasurementSheet(
             project_id=project_id,
@@ -108,22 +152,23 @@ def measurement_sheet(project_id):
             duct_type=request.form['duct_type'],
             w1=w1,
             h1=h1,
-            w2=float(request.form['w2']),
-            h2=float(request.form['h2']),
+            w2=w2,
+            h2=h2,
             degree_or_offset=request.form['degree_or_offset'],
-            length_or_radius=float(request.form['length_or_radius']),
+            length_or_radius=length_or_radius,
             quantity=quantity,
             factor=factor,
-            area=w1 * h1 * quantity * factor / 1000000,
-            gauge='24g',  # Update this logic later if needed
+            area=area,
+            gauge=gauge,
             bolts=bolts,
             gasket=gasket,
             cleat=cleat,
             corner=corner,
-            nuts=0
+            nuts=0  # You can calculate later
         )
         db.session.add(sheet)
         db.session.commit()
         flash('Measurement entry added')
+
     sheets = MeasurementSheet.query.filter_by(project_id=project_id).all()
     return render_template('measurement_sheet.html', project=project, sheets=sheets)
