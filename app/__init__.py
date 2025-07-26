@@ -2,6 +2,7 @@ from flask import Flask
 from .database import db
 from .routes import main as main_blueprint
 from .models import User
+from app.seed import seed_bp
 
 def create_app():
     app = Flask(__name__)
