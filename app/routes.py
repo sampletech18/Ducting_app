@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from app.database import db
-from models import User, Vendor, VendorContact, Project, MeasurementSheet
+from app.models import User, Vendor, VendorContact, Project, MeasurementSheet
 from datetime import datetime
 import math
 
