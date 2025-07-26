@@ -82,17 +82,8 @@ def vendors():
     vendors = Vendor.query.all()
     return render_template('vendor_registration.html', vendors=vendors)
 
-from flask import render_template, request, redirect, url_for, flash
-from werkzeug.utils import secure_filename
-from .models import db, Project, Vendor
-import os
-from datetime import datetime
 
-# 📍 Update this path to your desired uploads directory
-UPLOAD_FOLDER = 'ducting_app/static/uploads'
-
-# ✅ Route to create a new project
-@app.route('/new_project', methods=['GET', 'POST'])
+@main.route('/new_project', methods=['GET', 'POST'])
 def new_project():
     try:
         vendors = Vendor.query.all()
@@ -102,11 +93,9 @@ def new_project():
 
     if request.method == 'POST':
         try:
-            # 🔁 Auto-generate enquiry ID
             project_count = Project.query.count() + 1
             enquiry_id = f"VE/TN/2526/E{str(project_count).zfill(3)}"
 
-            # 📥 Get form data
             name = request.form.get('name')
             location = request.form.get('location')
             start_date = request.form.get('start_date')
@@ -119,7 +108,6 @@ def new_project():
             email = request.form.get('email')
             phone = request.form.get('phone')
 
-            # 📤 Handle source drawing file
             drawing_file = request.files.get('source_drawing')
             if drawing_file:
                 filename = secure_filename(drawing_file.filename)
@@ -128,7 +116,6 @@ def new_project():
             else:
                 filename = None
 
-            # 🗃 Save project
             project = Project(
                 enquiry_id=enquiry_id,
                 name=name,
@@ -147,15 +134,16 @@ def new_project():
             db.session.add(project)
             db.session.commit()
             flash('Project saved successfully!', 'success')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('main.dashboard'))
 
         except Exception as e:
             db.session.rollback()
             print("Error saving project:", e)
             flash('Failed to save project.', 'danger')
-            return redirect(url_for('new_project'))
+            return redirect(url_for('main.new_project'))
 
     return render_template('new_project.html', vendors=vendors)
+
 @main.route('/projects')
 def projects():
     if 'user' not in session:
