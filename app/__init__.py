@@ -1,18 +1,17 @@
 from flask import Flask
-from .database import db
+from .database import db, init_app       # ✅ import both db and init_app
 from .routes import main as main_blueprint
 from .models import User
-from .seed import seed_bp  # ✅ ensure relative import is correct
+from .seed import seed_bp
 
 def create_app():
     app = Flask(__name__)
     app.secret_key = 'your_secret_key'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://duct_db_user:SXQ9iAKpluAXibt4xcxhakJk4uoQCFko@dpg-d2075pp5pdvs73c6q740-a.singapore-postgres.render.com/duct_db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    db.init_app(app)
+    init_app(app)                         # ✅ CALL init_app() instead of setting config manually
+
     app.register_blueprint(main_blueprint)
-    app.register_blueprint(seed_bp)  # ✅ this line registers /seed_user route
+    app.register_blueprint(seed_bp)
 
     with app.app_context():
         db.create_all()
