@@ -21,7 +21,7 @@ def create_app():
     with app.app_context():
         db.create_all()
 
-        # ✅ Patch: Ensure all vendor columns exist
+        # ✅ Add missing columns to vendor table safely
         try:
             db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS gst_number VARCHAR(50)"))
             db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS address TEXT"))
@@ -29,16 +29,16 @@ def create_app():
             db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS phone VARCHAR(20)"))
             db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS contact_person VARCHAR(100)"))
             db.session.commit()
-            print("✅ All vendor columns ensured.")
+            print("✅ Vendor table columns verified/added.")
         except Exception as e:
             print("⚠️ Column patching error:", e)
 
-        # ✅ Create dummy admin user
+        # ✅ Add dummy admin user if not present
         if not User.query.filter_by(username='admin').first():
             admin = User(username='admin')
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
-            print("✅ Admin user created.")
+            print("✅ Dummy admin user created.")
 
     return app
