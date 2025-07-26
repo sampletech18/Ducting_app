@@ -154,6 +154,47 @@ def new_project():
     return render_template('new_project.html', vendors=vendors, enquiry_id=enquiry_id)
 
 
+@main.route('/save_project', methods=['POST'])
+def save_project():
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+
+    enquiry_id = request.form.get('enquiry_id')
+    project_name = request.form.get('project_name')
+    project_location = request.form.get('project_location')
+    start_date = request.form.get('start_date')
+    end_date = request.form.get('end_date')
+    vendor_id = request.form.get('vendor_id')
+    quotation = request.form.get('quotation')
+    project_incharge = request.form.get('project_incharge')
+    email_id = request.form.get('email_id')
+    contact_number = request.form.get('contact_number')
+    source_drawing = request.files.get('source_drawing')
+
+    filename = None
+    if source_drawing and source_drawing.filename != '':
+        filename = secure_filename(source_drawing.filename)
+        source_drawing.save(os.path.join('uploads', filename))
+
+    new_project = Project(
+        enquiry_id=enquiry_id,
+        project_name=project_name,
+        project_location=project_location,
+        start_date=start_date,
+        end_date=end_date,
+        vendor_id=vendor_id,
+        quotation=quotation,
+        project_incharge=project_incharge,
+        email_id=email_id,
+        contact_number=contact_number,
+        source_drawing=filename
+    )
+    db.session.add(new_project)
+    db.session.commit()
+
+    return redirect(url_for('main.new_project'))
+
+
 @main.route('/projects')
 def projects():
     if 'user' not in session:
