@@ -1,3 +1,5 @@
+# app/routes.py
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.utils import secure_filename
 from app.database import db
@@ -15,15 +17,10 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def home():
     return redirect(url_for('main.login'))
 
-
-
 def generate_enquiry_id():
-    from datetime import datetime
-    from .models import Project  # or relative import depending on structure
-
     year = datetime.now().year
-    state_code = "TN"  # You can change this if dynamic
-    vendor_code = "2526"  # Or make this dynamic later
+    state_code = "TN"
+    vendor_code = "2526"
     count = Project.query.count() + 1
     return f"VE/{state_code}/{vendor_code}/E{count:03d}"
 
@@ -78,7 +75,7 @@ def vendors():
         db.session.commit()
         flash('Vendor added')
         return redirect(url_for('main.vendors'))
-    
+
     vendors = Vendor.query.all()
     return render_template('vendor_registration.html', vendors=vendors)
 
@@ -90,8 +87,7 @@ def new_project():
     vendors = Vendor.query.all()
 
     if request.method == 'POST':
-        last_id = Project.query.count() + 1
-        enquiry_id = f"ve/TN/2526/e{last_id:03d}"
+        enquiry_id = generate_enquiry_id()
 
         file = request.files.get('source_drawing')
         filename = secure_filename(file.filename) if file else None
@@ -116,18 +112,9 @@ def new_project():
         db.session.add(project)
         db.session.commit()
         return redirect(url_for('main.projects'))
-    
-    return render_template('new_project.html', vendors=vendors)
 
-@main.route('/new_project', methods=['GET', 'POST'])
-def new_project():
-    if request.method == 'POST':
-        # process form data...
-        pass
-    else:
-        enquiry_id = generate_enquiry_id()
-        vendors = Vendor.query.all()
-        return render_template('new_project.html', enquiry_id=enquiry_id, vendors=vendors)
+    enquiry_id = generate_enquiry_id()
+    return render_template('new_project.html', enquiry_id=enquiry_id, vendors=vendors)
 
 @main.route('/projects')
 def projects():
@@ -153,16 +140,12 @@ def measurement_sheet(project_id):
         quantity = int(request.form['quantity'])
         factor = float(request.form['factor'])
 
-        # Area Calculation (placeholder - update based on duct type later)
         area = (w1 * h1 * quantity * factor) / 1000000
-
-        # Material Calculation
         gasket = 2 * (w1 + h1) * quantity * factor
         cleat = 2 * (w1 + h1) * quantity * factor
         bolts = math.ceil((2 * (w1 + h1) / 150) * quantity * factor)
         corner = 4 * quantity
 
-        # Gauge Logic Placeholder
         if w1 <= 751 and h1 <= 751:
             gauge = '24g'
         elif w1 <= 1201 and h1 <= 1201:
@@ -190,7 +173,7 @@ def measurement_sheet(project_id):
             gasket=gasket,
             cleat=cleat,
             corner=corner,
-            nuts=0  # You can calculate later
+            nuts=0
         )
         db.session.add(sheet)
         db.session.commit()
@@ -198,3 +181,4 @@ def measurement_sheet(project_id):
 
     sheets = MeasurementSheet.query.filter_by(project_id=project_id).all()
     return render_template('measurement_sheet.html', project=project, sheets=sheets)
+        
