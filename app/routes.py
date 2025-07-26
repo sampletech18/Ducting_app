@@ -90,7 +90,6 @@ def vendors():
 
 @main.route('/new_project', methods=['GET', 'POST'])
 def new_project():
-    
     if 'user' not in session:
         return redirect(url_for('main.login'))
 
@@ -147,16 +146,9 @@ def new_project():
 
         except Exception as e:
             db.session.rollback()
-            print("Error saving project:", e)
-            flash('Failed to save project.', 'danger')
-            return redirect(url_for('main.new_project'))
+            flash(f'Error saving project: {str(e)}', 'danger')
 
-    # Generate Enquiry ID again for GET request
-    project_count = Project.query.count() + 1
-    enquiry_id = f"VE/TN/2526/E{str(project_count).zfill(3)}"
-    
-    return render_template('new_project.html', vendors=vendors, enquiry_id=enquiry_id)
-
+    return render_template('new_project.html', vendors=vendors)
 @main.route('/save_project', methods=['POST'])
 def save_project():
     if 'user_id' not in session:
