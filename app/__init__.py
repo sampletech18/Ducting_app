@@ -1,14 +1,18 @@
 from flask import Flask
-from .database import db, init_app       # ✅ import both db and init_app
+from flask_migrate import Migrate  # ✅ Add this
+from .database import db, init_app
 from .routes import main as main_blueprint
 from .models import User
 from .seed import seed_bp
+
+migrate = Migrate()  # ✅ Add this line
 
 def create_app():
     app = Flask(__name__)
     app.secret_key = 'your_secret_key'
 
-    init_app(app)                         # ✅ CALL init_app() instead of setting config manually
+    init_app(app)
+    migrate.init_app(app, db)  # ✅ This activates migrations
 
     app.register_blueprint(main_blueprint)
     app.register_blueprint(seed_bp)
