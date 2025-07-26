@@ -21,18 +21,19 @@ def create_app():
     with app.app_context():
         db.create_all()
 
-        # ✅ Fix: Add any missing columns to 'vendor'
+        # ✅ Patch: Ensure all vendor columns exist
         try:
             db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS gst_number VARCHAR(50)"))
             db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS address TEXT"))
             db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS email VARCHAR(120)"))
             db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS phone VARCHAR(20)"))
+            db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS contact_person VARCHAR(100)"))
             db.session.commit()
-            print("✅ Ensured all expected vendor columns exist.")
+            print("✅ All vendor columns ensured.")
         except Exception as e:
             print("⚠️ Column patching error:", e)
 
-        # ✅ Admin account creation (first-time only)
+        # ✅ Create dummy admin user
         if not User.query.filter_by(username='admin').first():
             admin = User(username='admin')
             admin.set_password('admin123')
