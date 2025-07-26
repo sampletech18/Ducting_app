@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.utils import secure_filename
 from app.database import db
-from app.models import User, Vendor, VendorContact, Project, MeasurementSheet
 from datetime import datetime
 import os
 import math
