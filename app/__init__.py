@@ -2,7 +2,7 @@ from flask import Flask
 from .database import db
 from .routes import main as main_blueprint
 from .models import User
-from app.seed import seed_bp
+from .seed import seed_bp  # ✅ ensure relative import is correct
 
 def create_app():
     app = Flask(__name__)
@@ -12,6 +12,7 @@ def create_app():
 
     db.init_app(app)
     app.register_blueprint(main_blueprint)
+    app.register_blueprint(seed_bp)  # ✅ this line registers /seed_user route
 
     with app.app_context():
         db.create_all()
