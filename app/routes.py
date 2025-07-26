@@ -18,12 +18,15 @@ def home():
     return redirect(url_for('main.login'))
 
 def generate_enquiry_id():
+    try:
+        count = Project.query.count() + 1
+    except Exception as e:
+        print(f"Error generating enquiry ID: {e}")
+        count = 1
     year = datetime.now().year
     state_code = "TN"
     vendor_code = "2526"
-    count = Project.query.count() + 1
     return f"VE/{state_code}/{vendor_code}/E{count:03d}"
-
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
