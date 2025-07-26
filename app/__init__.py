@@ -19,16 +19,20 @@ def create_app():
     app.register_blueprint(seed_bp)
 
     with app.app_context():
-        # ✅ Safe SQL column patches (only if not already present)
+        db.create_all()
+
+        # ✅ Fix: Add any missing columns to 'vendor'
         try:
             db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS gst_number VARCHAR(50)"))
             db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS address TEXT"))
+            db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS email VARCHAR(120)"))
+            db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS phone VARCHAR(20)"))
             db.session.commit()
-            print("✅ Ensured gst_number and address columns exist in vendor table.")
+            print("✅ Ensured all expected vendor columns exist.")
         except Exception as e:
             print("⚠️ Column patching error:", e)
 
-        # ✅ Ensure dummy admin user
+        # ✅ Admin account creation (first-time only)
         if not User.query.filter_by(username='admin').first():
             admin = User(username='admin')
             admin.set_password('admin123')
