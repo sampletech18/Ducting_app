@@ -90,6 +90,7 @@ def vendors():
 
 @main.route('/new_project', methods=['GET', 'POST'])
 def new_project():
+    
     if 'user' not in session:
         return redirect(url_for('main.login'))
 
@@ -150,9 +151,11 @@ def new_project():
             flash('Failed to save project.', 'danger')
             return redirect(url_for('main.new_project'))
 
-    enquiry_id = generate_enquiry_id()
+    # Generate Enquiry ID again for GET request
+    project_count = Project.query.count() + 1
+    enquiry_id = f"VE/TN/2526/E{str(project_count).zfill(3)}"
+    
     return render_template('new_project.html', vendors=vendors, enquiry_id=enquiry_id)
-
 
 @main.route('/save_project', methods=['POST'])
 def save_project():
