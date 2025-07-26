@@ -21,7 +21,7 @@ def login():
         password = request.form['password']
 
         user = User.query.filter_by(username=username).first()
-        if user and user.check_password(password):
+        if user is not None and user.check_password(password):
             session['user'] = user.username
             return redirect(url_for('main.dashboard'))
 
