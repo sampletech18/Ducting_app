@@ -21,17 +21,25 @@ def create_app():
     with app.app_context():
         db.create_all()
 
-        # ✅ Add missing columns to vendor table safely
-        try:
-            db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS gst_number VARCHAR(50)"))
-            db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS address TEXT"))
-            db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS email VARCHAR(120)"))
-            db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS phone VARCHAR(20)"))
-            db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS contact_person VARCHAR(100)"))
-            db.session.commit()
-            print("✅ Vendor table columns verified/added.")
-        except Exception as e:
-            print("⚠️ Column patching error:", e)
+        # ✅ Safely patch missing Vendor table columns
+        alter_statements = [
+            "ALTER TABLE vendor ADD COLUMN IF NOT EXISTS gst_number VARCHAR(50)",
+            "ALTER TABLE vendor ADD COLUMN IF NOT EXISTS address VARCHAR(250)",
+            "ALTER TABLE vendor ADD COLUMN IF NOT EXISTS contact_person VARCHAR(100)",
+            "ALTER TABLE vendor ADD COLUMN IF NOT EXISTS contact_email VARCHAR(100)",
+            "ALTER TABLE vendor ADD COLUMN IF NOT EXISTS contact_phone VARCHAR(20)",
+            "ALTER TABLE vendor ADD COLUMN IF NOT EXISTS bank_name VARCHAR(100)",
+            "ALTER TABLE vendor ADD COLUMN IF NOT EXISTS bank_account VARCHAR(100)",
+            "ALTER TABLE vendor ADD COLUMN IF NOT EXISTS ifsc VARCHAR(20)"
+        ]
+        for stmt in alter_statements:
+            try:
+                db.session.execute(text(stmt))
+            except Exception as e:
+                print(f"⚠️ Could not apply: {stmt}\n{e}")
+
+        db.session.commit()
+        print("✅ Vendor table columns verified/added.")
 
         # ✅ Add dummy admin user if not present
         if not User.query.filter_by(username='admin').first():
