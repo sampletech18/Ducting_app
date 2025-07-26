@@ -82,43 +82,80 @@ def vendors():
     vendors = Vendor.query.all()
     return render_template('vendor_registration.html', vendors=vendors)
 
-@main.route('/new_project', methods=['GET', 'POST'])
-def new_project():
-    if 'user' not in session:
-        return redirect(url_for('main.login'))
+from flask import render_template, request, redirect, url_for, flash
+from werkzeug.utils import secure_filename
+from .models import db, Project, Vendor
+import os
+from datetime import datetime
 
-    vendors = Vendor.query.all()
+# 📍 Update this path to your desired uploads directory
+UPLOAD_FOLDER = 'ducting_app/static/uploads'
+
+# ✅ Route to create a new project
+@app.route('/new_project', methods=['GET', 'POST'])
+def new_project():
+    try:
+        vendors = Vendor.query.all()
+    except Exception as e:
+        print("Error loading vendors:", e)
+        vendors = []
 
     if request.method == 'POST':
-        enquiry_id = generate_enquiry_id()
+        try:
+            # 🔁 Auto-generate enquiry ID
+            project_count = Project.query.count() + 1
+            enquiry_id = f"VE/TN/2526/E{str(project_count).zfill(3)}"
 
-        file = request.files.get('source_drawing')
-        filename = secure_filename(file.filename) if file else None
-        if filename:
-            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            # 📥 Get form data
+            name = request.form.get('name')
+            location = request.form.get('location')
+            start_date = request.form.get('start_date')
+            end_date = request.form.get('end_date')
+            vendor_id = request.form.get('vendor_id')
+            gst_number = request.form.get('gst_number')
+            address = request.form.get('address')
+            quotation = request.form.get('quotation')
+            project_incharge = request.form.get('project_incharge')
+            email = request.form.get('email')
+            phone = request.form.get('phone')
 
-        project = Project(
-            enquiry_id=enquiry_id,
-            name=request.form['name'],
-            location=request.form['location'],
-            start_date=datetime.strptime(request.form['start_date'], '%Y-%m-%d'),
-            end_date=datetime.strptime(request.form['end_date'], '%Y-%m-%d'),
-            vendor_id=request.form['vendor_id'],
-            gst_number=request.form['gst'],
-            address=request.form['address'],
-            quotation=request.form['quotation'],
-            project_incharge=request.form['incharge'],
-            email=request.form['email'],
-            phone=request.form['phone'],
-            source_drawing=filename
-        )
-        db.session.add(project)
-        db.session.commit()
-        return redirect(url_for('main.projects'))
+            # 📤 Handle source drawing file
+            drawing_file = request.files.get('source_drawing')
+            if drawing_file:
+                filename = secure_filename(drawing_file.filename)
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
+                drawing_file.save(filepath)
+            else:
+                filename = None
 
-    enquiry_id = generate_enquiry_id()
-    return render_template('new_project.html', enquiry_id=enquiry_id, vendors=vendors)
+            # 🗃 Save project
+            project = Project(
+                enquiry_id=enquiry_id,
+                name=name,
+                location=location,
+                start_date=datetime.strptime(start_date, '%Y-%m-%d') if start_date else None,
+                end_date=datetime.strptime(end_date, '%Y-%m-%d') if end_date else None,
+                vendor_id=vendor_id,
+                gst_number=gst_number,
+                address=address,
+                quotation=quotation,
+                project_incharge=project_incharge,
+                email=email,
+                phone=phone,
+                source_drawing=filename
+            )
+            db.session.add(project)
+            db.session.commit()
+            flash('Project saved successfully!', 'success')
+            return redirect(url_for('dashboard'))
 
+        except Exception as e:
+            db.session.rollback()
+            print("Error saving project:", e)
+            flash('Failed to save project.', 'danger')
+            return redirect(url_for('new_project'))
+
+    return render_template('new_project.html', vendors=vendors)
 @main.route('/projects')
 def projects():
     if 'user' not in session:
