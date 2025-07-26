@@ -4,6 +4,7 @@ from .database import db, init_app
 from .routes import main as main_blueprint
 from .models import User
 from .seed import seed_bp
+from sqlalchemy import text
 
 migrate = Migrate()
 
@@ -11,22 +12,28 @@ def create_app():
     app = Flask(__name__)
     app.secret_key = 'your_secret_key'
 
-    # Initialize database and migrations
     init_app(app)
     migrate.init_app(app, db)
 
-    # Register blueprints
     app.register_blueprint(main_blueprint)
     app.register_blueprint(seed_bp)
 
     with app.app_context():
-        db.create_all()
+        # ✅ Safe SQL column patches (only if not already present)
+        try:
+            db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS gst_number VARCHAR(50)"))
+            db.session.execute(text("ALTER TABLE vendor ADD COLUMN IF NOT EXISTS address TEXT"))
+            db.session.commit()
+            print("✅ Ensured gst_number and address columns exist in vendor table.")
+        except Exception as e:
+            print("⚠️ Column patching error:", e)
 
-        # Add dummy admin user if not already present
+        # ✅ Ensure dummy admin user
         if not User.query.filter_by(username='admin').first():
             admin = User(username='admin')
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
+            print("✅ Admin user created.")
 
     return app
