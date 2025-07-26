@@ -1,5 +1,3 @@
-# app/routes.py
-
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.utils import secure_filename
 from app.database import db
@@ -13,9 +11,11 @@ main = Blueprint('main', __name__)
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
 @main.route('/')
 def home():
     return redirect(url_for('main.login'))
+
 
 def generate_enquiry_id():
     try:
@@ -27,6 +27,8 @@ def generate_enquiry_id():
     state_code = "TN"
     vendor_code = "2526"
     return f"VE/{state_code}/{vendor_code}/E{count:03d}"
+
+
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -41,6 +43,7 @@ def login():
         flash('Invalid Credentials')
     return render_template('login.html')
 
+
 @main.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -51,11 +54,13 @@ def register():
         return redirect(url_for('main.login'))
     return render_template('register.html')
 
+
 @main.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect(url_for('main.login'))
     return render_template('dashboard.html')
+
 
 @main.route('/vendors', methods=['GET', 'POST'])
 def vendors():
@@ -85,6 +90,9 @@ def vendors():
 
 @main.route('/new_project', methods=['GET', 'POST'])
 def new_project():
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
+
     try:
         vendors = Vendor.query.all()
     except Exception as e:
@@ -142,7 +150,9 @@ def new_project():
             flash('Failed to save project.', 'danger')
             return redirect(url_for('main.new_project'))
 
-    return render_template('new_project.html', vendors=vendors)
+    enquiry_id = generate_enquiry_id()
+    return render_template('new_project.html', vendors=vendors, enquiry_id=enquiry_id)
+
 
 @main.route('/projects')
 def projects():
@@ -151,6 +161,7 @@ def projects():
 
     projects = Project.query.all()
     return render_template('projects.html', projects=projects)
+
 
 @main.route('/measurement_sheet/<int:project_id>', methods=['GET', 'POST'])
 def measurement_sheet(project_id):
@@ -209,4 +220,3 @@ def measurement_sheet(project_id):
 
     sheets = MeasurementSheet.query.filter_by(project_id=project_id).all()
     return render_template('measurement_sheet.html', project=project, sheets=sheets)
-        
