@@ -1,6 +1,4 @@
-# run.py
-
-from app import create_app
+from ducting_app import create_app  # 👈 fix this line
 
 app = create_app()
 
