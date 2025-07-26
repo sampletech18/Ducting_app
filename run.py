@@ -1,4 +1,4 @@
-from ducting_app import create_app  # 👈 fix this line
+from app import create_app  # ✅ matches folder name # 👈 fix this line
 
 app = create_app()
 
