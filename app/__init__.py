@@ -1,10 +1,10 @@
 from flask import Flask
 from flask_migrate import Migrate
-from sqlalchemy import text  # ✅ Add this
 from .database import db, init_app
 from .routes import main as main_blueprint
 from .models import User
 from .seed import seed_bp
+from sqlalchemy import text  # ✅ add this
 
 migrate = Migrate()
 
@@ -21,15 +21,15 @@ def create_app():
     with app.app_context():
         db.create_all()
 
-        # ✅ Manually patch vendor table (add gst_number if missing)
+        # ✅ Fix missing gst_number column if not exists
         try:
             db.session.execute(text("ALTER TABLE vendor ADD COLUMN gst_number VARCHAR(50)"))
             db.session.commit()
-            print("✅ Added gst_number column to vendor table.")
+            print("✅ Added gst_number column.")
         except Exception as e:
-            print("ℹ️ gst_number column might already exist:", e)
+            print("ℹ️ Column may already exist:", e)
 
-        # Dummy user: admin / admin123
+        # Dummy user
         if not User.query.filter_by(username='admin').first():
             admin = User(username='admin')
             admin.set_password('admin123')
