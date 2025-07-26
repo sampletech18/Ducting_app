@@ -18,10 +18,14 @@ def home():
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user = User.query.filter_by(username=request.form['username']).first()
-        if user and user.password == request.form['password']:
+        username = request.form['username']
+        password = request.form['password']
+
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
             session['user'] = user.username
             return redirect(url_for('main.dashboard'))
+
         flash('Invalid Credentials')
     return render_template('login.html')
 
