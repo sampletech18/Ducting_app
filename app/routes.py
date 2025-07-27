@@ -99,11 +99,12 @@ def new_project():
         print("Error loading vendors:", e)
         vendors = []
 
+    # Generate Enquiry ID for GET and POST
+    project_count = Project.query.count() + 1
+    enquiry_id = f"VE/TN/2526/E{str(project_count).zfill(3)}"
+
     if request.method == 'POST':
         try:
-            project_count = Project.query.count() + 1
-            enquiry_id = f"VE/TN/2526/E{str(project_count).zfill(3)}"
-
             name = request.form.get('name')
             location = request.form.get('location')
             start_date = request.form.get('start_date')
@@ -145,10 +146,11 @@ def new_project():
             return redirect(url_for('main.dashboard'))
 
         except Exception as e:
-            db.session.rollback()
-            flash(f'Error saving project: {str(e)}', 'danger')
+            flash(f'Error saving project: {e}', 'danger')
 
-    return render_template('new_project.html', vendors=vendors)
+    return render_template('new_project.html', vendors=vendors, enquiry_id=enquiry_id)
+
+
 @main.route('/save_project', methods=['POST'])
 def save_project():
     if 'user_id' not in session:
